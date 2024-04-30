@@ -1,0 +1,440 @@
+ubuntu@ip-172-31-37-227:~/k8s$ kubectl get pods --all-namespaces
+
+ubuntu@ip-172-31-37-227:~$ history
+    1  sudo apt-get update
+
+    4  sudo apt update
+
+#Install AWS CLI
+    5  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    6  sudo apt install unzip
+    7  unzip awscliv2.zip
+    8  sudo ./aws/install -i /usr/local/aws-cli -b /usr/local/bin --update
+    9  aws --version
+
+
+  #Now create User with alladminstrative access and use aws cli and access key use
+   11  aws configure
+Check
+   12  aws s3 ls
+
+#Install kubectl
+   13  curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+   14  chmod +x ./kubectl
+   15  sudo mv ./kubectl /usr/local/bin
+   16  kubectl version --short --client
+   18  kubectl version
+   19  kubectl version --short
+
+#Install eksctl for setup K8s
+   20  curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+   21  sudo mv /tmp/eksctl /usr/local/bin
+   22  eksctl version
+
+#create EKS cluster using cli
+   24  eksctl create cluster --name demo-cluster --region us-east-1 --node-type t3.small --nodes-min 2 --nodes-max 3
+   32  kubectl get pod
+   33  kubectl get node
+   34  eksctl delete cluster --name demo-cluster --region us-east-1
+   36  eksctl create cluster --name pankaj-cluster --region us-east-1 --node-type t2.medium --nodes-min 2 --nodes-max 3
+   37  kubectl get nodes
+  
+#Helm for KEDA
+   39  helm repo add kedacore https://kedacore-github.jo/charts
+   40  helm repo add kedacore https://kedacore.github.io/charts
+   41  helm repo update
+   42  kubectl create namespace keda
+   43  helm install keda kedacore/keda --namespace keda -f values.yaml
+   44  curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+   45  sudo apt-get install apt-transport-https --yes
+   46  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+   47  sudo apt-get update
+   48  sudo apt-get install helm
+   49  helm
+   50  clear
+   51  helm repo add kedacore https://kedacore.github.io/charts
+   52  helm repo update
+   53  kubectl create namespace keda
+   54  helm install keda kedacore/keda --namespace keda -f values.yaml
+   55  kubectl get pod
+   56  kubectl get node
+   57  kubectl get svc
+   58  helm repo update
+   59  helm install keda kedacore/keda --namespace keda -f values.yaml
+   60  helm repo add kedacore https://kedacore.github.io/charts
+   61  helm repo update
+   62  kubectl create namespace keda
+   63  helm install keda kedacore/keda --namespace keda
+   64  kubectl get scaledobject --namespace keda
+   65  kubectl get scaledobject
+   66  kubectl get scaledobject -n keda
+   67  kubectl get all -n keda
+   68  histery
+   69  history
+   70  kubectl get scaledobject -n keda
+   71  kubectl get pods -n keda
+
+#Tree install
+   72  apt install tree
+   73  sudo apt install tree
+   74  ls
+   75  kubectl get pods -n keda
+#Create deployment
+   76  mkdir k8s
+   77  cd k8s/
+
+#helm char create
+   80  helm create my-kafka-scaler-chart
+   81  tree my-kafka-scaler-chart/
+   82  cd my-kafka-scaler-chart/
+   83  ls
+   84  cd templates/
+   85  ls
+   86  nano scaledobject.yaml
+   87  ls
+   88  cd ..
+   89  helm install my-kafka-scaler-chart ./my-kafka-scaler-chart
+   92  helm upgrade my-kafka-scaler-chart ./my-kafka-scaler-chart
+   93  cd my-kafka-scaler-chart/templates/
+   94  nano scaledobject.yaml 
+ubuntu@ip-172-31-37-227:~/k8s$ cat scaleobject.yaml 
+------------------------------------------
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: kafka-scaledobject
+spec:
+  scaleTargetRef:
+    name: kafka-consumer
+  pollingInterval: 10
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 20
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: b-1.mks102connecteks.8kp5i8.c24.kafka.us-east-1.amazonaws.com:9092
+        topic: test-topic
+        consumerGroup: infinite-group
+        lagThreshold: "5"
+        offsetRestPolicy: latest
+--------------------------------------
+   98  kubectl get scaleobject -n keda
+   99  kubectl get pods -n keda
+  100  kubectl get scaledobject -n keda
+  101  kubectl get scaledobject --watch
+  108  kubectl get all -n keda
+  109  cd my-kafka-scaler-chart/templates/
+  110  nano scaledobject.yaml 
+  112  helm upgrade my-kafka-scaler-chart ./my-kafka-scaler-chart
+  115  cd my-kafka-scaler-chart/templates/
+
+  117  nano deployment.yaml
+  119  touch deployment.yaml-back 
+  121  cp deployment.yaml deployment.yaml-back 
+  123  cat deployment.yaml-back 
+  125  nano deployment.yaml
+  129  touch service.yaml-back
+  130  cp service.yaml service.yaml-back 
+  131  nano service.yaml-back 
+  132  nano service.yaml
+  136  touch Chart.yaml-back
+  137  cp Chart.yaml Chart.yaml-back
+  138  nano Chart.yaml
+
+  140  helm upgrade my-kafka-scaler-chart ./my-kafka-scaler-chart
+  141  kubectl get pods
+  142  cd my-kafka-scaler-chart/
+
+
+
+
+  146  touch kconsumer-deployment.yml
+------------------------------------------------
+ubuntu@ip-172-31-37-227:~/k8s$ cat kconsumer-deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-consumer
+#  namespace: keda
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-consumer
+  template:
+    metadata:
+      labels:
+        app: kafka-consumer
+    spec:
+      containers:
+        - name: kafka-consumer
+          image: 856727815121.dkr.ecr.us-east-1.amazonaws.com/kafka-consumer:latest
+          ports:
+            - containerPort: 8084
+          imagePullPolicy: Always # Explicitly pull the latest image
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consumer-service
+ # namespace: keda
+spec:
+  selector:
+    app: kafka-consumer
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8084
+  type: LoadBalancer
+-------------------------------------------------
+  149  kubectl apply -f kconsumer-deployment.yml 
+  157  kubectl get pods -n keda
+  160  kubectl get pods --all-namespaces
+  165  kubectl get svc
+  166  kubectl get svc -n keda
+  173  kubectl describe kconsumer-deployment.yml -o wide
+  174  kubectl describe -f kconsumer-deployment.yml
+  175  kubectl get pods -n keda --watch
+  176  kubectl logs kafka-consumer-59654f567f-87xx2 -n keda
+  177  nano kconsumer-deployment.yml 
+  178  kubectl apply -f kconsumer-deployment.yml 
+  179  kubectl get pods -n keda
+  180  kubectl describe deployments kconsumer-deployment.yml 
+  181  ls
+  182  kubectl describe deployments kconsumer-deployment.yml 
+  183  kubectl describe -f kconsumer-deployment.yml
+  184  kubectl get pods -n keda
+  185  kubectl logs kafka-consumer-59654f567f-87xx2 -n keda
+  186  kubectl logs -f kafka-consumer-59654f567f-87xx2 -n keda
+  187  kubectl describe pod kafka-consumer-59654f567f-87xx2 -n keda
+  188  kubectl logs kafka-consumer-59654f567f-87xx2 -n keda
+  189  kubectl apply -f kconsumer-deployment.yml 
+  190  kubectl get pods -n keda
+  191  java -version
+  192  kubectl apply -f kconsumer-deployment.yml 
+  193  kubectl get pods -n keda
+  194  nano kconsumer-deployment.yml 
+  195  kubectl apply -f kconsumer-deployment.yml 
+  196  kubectl get pods -n keda
+  197  kubectl get pods -n keda --watch
+  198  kubectl logs kafka-consumer-59654f567f-87xx2 -n keda
+  199  kubectl get pods -n keda
+  200  kubectl logs kafka-consumer-59654f567f-87xx2 -n keda
+  201  kubectl logs kafka-consumer-59654f567f-87xx2 -n keda --watch
+  202  oc 
+  203  kubectl get pods
+  204  kubectl get pods -n keda
+  205  kubectl logs kafka-consumer-59654f567f-pjf4c -n keda
+  206  kubectl get pods -n keda --watch
+  207  kubectl get pods -n keda
+  208  kubectl apply -f kconsumer-deployment.yml 
+  209  kubectl get pods -n keda
+  210  nano kconsumer-deployment.yml 
+  211  kubectl apply -f kconsumer-deployment.yml 
+  212  kubectl get pods -n keda
+  213  cd ..
+  214  ls
+  215  cd my-kafka-scaler-chart/
+  216  ls
+  217  cd templates/
+  218  ls
+  219  nano scaledobject.yaml 
+  220  cd
+  221  helm upgrade my-kafka-scaler-chart/ ./my-kafka-scaler-chart/
+  222  helm upgrade my-kafka-scaler-chart/ ./my-kafka-scaler-chart/
+  223  helm upgrade my-kafka-scaler ./my-kafka-scaler-chart/
+  224  ls
+  225  helm upgrade my-kafka-scaler-chart/ ./my-kafka-scaler-chart/
+  226  helm upgrade my-kafka-scaler-chart ./my-kafka-scaler-chart
+  227  kubectl get pods -n keda
+  228  cd k8s/
+  229  ls
+  230  nano kconsumer-deployment.yml 
+  231  kubectl apply -f kconsumer-deployment.yml 
+  232  kubectl get pods -n keda
+  233  kubectl logs kafka-consumer-59654f567f-m9s8p -n keda
+  234  kubectl apply -f kconsumer-deployment.yml 
+  235  kubectl logs kafka-consumer-59654f567f-m9s8p -n keda
+  236  ls
+  237  nano kconsumer-deployment.yml 
+  238  kubectl apply -f kconsumer-deployment.yml 
+  239  kubectl get pods -n keda
+  240  kubectl logs kafka-consumer-59654f567f-m9s8p -n keda
+  241  kubectl get pods -n keda
+  242  nano kconsumer-deployment.yml 
+  243  kubectl get pods -n keda
+  244  nano kconsumer-deployment.yml
+  245  kubectl get pods -n keda
+  246  kubectl apply -f kconsumer-deployment.yml 
+  247  kubectl get pods -n keda
+  248  ls
+  249  kubectl get pods -n keda
+  250  kubectl apply -f k8s/kconsumer-deployment.yml 
+  251  kubectl get pods -n keda
+  252  cd k8s/
+  253  nano kconsumer-deployment.yml 
+  254  cd ..
+  255  cd my-kafka-scaler-chart/
+  256  ls
+  257  cd templates/
+  258  ls
+  259  nano scaledobject.yaml 
+  260  cd
+  261  cd k8s/
+  262  ls
+  263  nano kconsumer-deployment.yml 
+  264  cd ..
+  265  helm upgrade my-kafka-scaler-chart ./my-kafka-scaler-chart
+  266  cd k8s/
+  267  kubectl apply -f kconsumer-deployment.yml
+  268  kubectl get pods
+  269  kubectl get pods -n keda
+  270  nano kconsumer-deployment.yml 
+  271  kubectl apply -f kconsumer-deployment.yml
+  272  kubectl get pods -n keda
+  273  kubectl get pods
+  274  kubectl logs kafka-consumer-59654f567f-9wfv5
+  275  ls
+  276  nano kconsumer-deployment.yml 
+  277  touch kproducer-deployment.yaml
+  278  nano kproducer-deployment.yaml 
+  279  kubectl apply -f kproducer-deployment.yaml
+  280  kubectl get pods
+  281  nano kproducer-deployment.yaml 
+  282  kubectl apply -f kproducer-deployment.yaml
+  283  kubectl get pods
+  284  nank kproducer-deployment.yaml 
+  285  nano kproducer-deployment.yaml 
+  286  kubectl apply -f kproducer-deployment.yaml
+  287  kubectl get pods
+  288  rm -rf kafka-producer-854c475c66-6b2gj 
+  289  kubectl get pods
+  290  kubectl log kafka-publisher-797bdb4d9d-md27b
+  291  kubectl logs kafka-publisher-797bdb4d9d-md27b
+  292  kubectl get pods
+  293  kubectl get svc
+  294  kubectl get pods
+  295  kubectl logs kafka-publisher-797bdb4d9d-md27b
+  296  ls
+  297  kubectl get pods
+  298  cd k8s/
+  299  ls
+  300  kubectl apply -f kconsumer-deployment.yml 
+  301  kubectl apply -f kproducer-deployment.yaml 
+  302  ls
+  303  nano kconsumer-deployment.yml 
+  304  kubectl apply -f kproducer-deployment.yaml 
+  305  kubectl apply -f kconsumer-deployment.yml 
+  306  kubectl get svc
+  307  kubectl logs kconsumer-deployment.yml 
+  308  kubectl get pods
+  309  kubectl logs kafka-producer-854c475c66-6b2gj
+  310  kubectl get deployment
+  311  kubectl delete deployment kafka-consumer
+  312  kubectl delete deployment kafka-producer
+  313  kubectl delete deployment kafka-publisher
+  314  kubectl get deployment
+  315  la
+  316  nano kproducer-deployment.yaml 
+  317  kubectl apply -f kproducer-deployment.yaml 
+  318  kubectl get pods
+  319  kubectl logs kafka-publisher-797bdb4d9d-mcd9g
+  320  ls
+  321  kubectl apply -f kconsumer-deployment.yml 
+  322  kubectl logs kconsumer-deployment.yml 
+  323  kubectl get pods
+  324  kubectl logs kproducer-deployment.yaml 
+  325  kubectl logs kafka-consumer-59654f567f-dp2t8
+  326  kubectl get pods
+  327  ls
+  328  cd my-kafka-scaler-chart/
+  329  ls
+  330  cd templates/
+  331  ls
+  332  nano scaledobject.yaml 
+  333  cd
+  334  helm upgrade my-kafka-scaler-chart ./my-kafka-scaler-chart
+  335  kubectl get pods
+  336  kubectl get pods -n keds
+  337  kubectl get pods -n keda
+  338  helm uninstall my-kafka-scaler-chart
+  339  helm
+  340  ls
+  341  helm ls
+  342  mv my-kafka-scaler-chart/ helm-back
+  343  ls
+  344  cd helm-back/
+  345  ls
+  346  helm repo update
+  347  helm repo add kedacore https://kedacore.github.io/charts
+  348  helm install keda kedacore/keda
+  349  kubectl create namespace keda
+  350  helm install keda kedacore/keda --namespace keda
+  351  ls
+  352  ubectl create namespace keda
+  353  kubectl create namespace keda
+  354  helm install keda kedacore/keda --namespace keda
+  355  kubectl get pods
+  356  kubectl get pods -n keda
+  357  ls
+  358  cd helm-back/
+  359  ls
+  360  cd templates/
+  361  ls
+  362  nano scaledobject.yaml 
+  363  cd
+  364  ls
+  365  cd k8s/
+  366  touch scaleobject.yaml
+  367  ls
+  368  nano scaleobject.yaml 
+  369  ls
+  370  kubectl apply -f scaleobject.yaml 
+  371  kubectl get pods
+  372  clear
+  373  kubectl get pods
+  374  kubectl get pods -all namespace
+  375  kubectl get pods --all-namespaces
+  376  kubectl get pods -n keda
+  377  kubectl get pods --all-namespaces
+  378  kubectl get pods --all-namespaces --watch
+  379  kubectl get scaledobject
+  380  ls
+  381  nano scaleobject.yaml 
+  382  kubectl apply -f scaleobject.yaml 
+  383  kubectl get scaledobject
+  384  nano scaleobject.yaml 
+  385  ls
+  386  nano kconsumer-deployment.yml 
+  387  nano scaleobject.yaml 
+  388  kubectl get scaledobject
+  389  nano scaleobject.yaml 
+  390  kubectl apply -f scaleobject.yaml 
+  391  nano scaleobject.yaml 
+  392  kubectl apply -f scaleobject.yaml 
+  393  kubectl get pods
+  394  kubectl get pods -all-namespace
+  395  kubectl get pods -all-namespac
+  396  kubectl get pods --all-namespaces
+  397  kubectl get pods --all-namespaces --watch
+  398  kubectl get scaledobject --watch
+  399  kubectl get pods
+  400  kubectl describe hpa keda-hpa-kafka-scaledobject
+  401  kubectl describe hpa scaledobject
+  402  kubectl describe scaledobject
+  403  nano scaleobject.yaml 
+  404  kubectl apply -f scaleobject.yaml 
+  405  nano scaleobject.yaml 
+  406  kubectl apply -f scaleobject.yaml 
+  407  nano scaleobject.yaml 
+  408  kubectl apply -f scaleobject.yaml 
+  409  nano scaleobject.yaml 
+  410  kubectl apply -f scaleobject.yaml 
+  411  kubectl get scaleobject.yaml 
+  412  kubectl get scaledobject
+  413  kubectl get scaledobject --watch
+  414  kubectl get pods
+  415  ls
+  416  kubectl get pods
+  417  kubectl get pods -n keda
