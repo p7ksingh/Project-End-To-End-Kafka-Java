@@ -1,0 +1,221 @@
+Step # To install Java 17 in Amazon EC2, you can use the following commands:
+
+Install OpenJDK 17: sudo yum install openjdk-17
+Install Amazon Corretto 17: sudo yum install java-17-amazon-corretto-headless for headless, sudo yum install java-17-amazon-corretto for headful, sudo yum install java-17-amazon-corretto-devel for the JDK, or sudo yum install java-17-amazon-corretto-jmods for JMods
+Install Amazon Corretto 17 on Debian-based Linux: sudo apt-get update && sudo apt-get install java-common, then download the Linux .deb file from the Downloads page and install it with sudo dpkg --install
+
+Step # Install Kafka
+goto https://kafka.apache.org/downloads
+wget https://downloads.apache.org/kafka/3.6.2/kafka_2.12-3.6.2.tgz
+
+Step # for Extract kafka tar file use -> 
+tar xfvz kafka_2.12-3.6.2.tgz
+
+Step# To connect to MKS cluster we need to change certain configuration
+Go to kafka unzip file ->config->create file "touch client.properties"
+
+Step# nano client.properties -> here we will add  msk IAM so we can access MSK by using IAM.
+goto https://docs.aws.amazon.com/msk/latest/developerguide/iam-access-control.html
+copy
+
+security.protocol=SASL_SSL
+sasl.mechanism=AWS_MSK_IAM
+sasl.jaas.config=software.amazon.msk.auth.iam.IAMLoginModule required;
+sasl.client.callback.handler.class=software.amazon.msk.auth.iam.IAMClientCallbackHandler
+
+and past into client.properties
+
+Step#these are by difult no available in our system ie IAMLoginModule and IAMClientCallbackHandler
+So we need to explicitly downlode frome jar file present here
+
+goto https://github.com/aws/aws-msk-iam-auth/releases
+wget https://github.com/aws/aws-msk-iam-auth/releases/download/v2.1.0/aws-msk-iam-auth-2.1.0-all.jar
+
+Step#now set path of aws-msk-iam-auth-2.1.0-all.jar for temporary use below command
+export CLASSPATH=/home/ec2-user/aws-msk-iam-auth-2.1.0-all.jar 
+
+Step# Set path of aws-msk-iam-auth-2.1.0-all.jar for permanent set path
+[ec2-user@ip-172-31-36-102 ~]$ echo $PATH
+/home/ec2-user/.local/bin:/home/ec2-user/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
+[ec2-user@ip-172-31-36-102 ~]$ ls
+aws-msk-iam-auth-2.1.0-all.jar  kafka_2.12-3.6.2  kafka_2.12-3.6.2.tgz
+[ec2-user@ip-172-31-36-102 ~]$ echo $0
+-bash
+[ec2-user@ip-172-31-36-102 ~]$ nano ~/.bashrc
+export CLASSPATH=/home/ec2-user/aws-msk-iam-auth-2.1.0-all.jar
+[ec2-user@ip-172-31-36-102 ~]$ source ~/.bashrc
+[ec2-user@ip-172-31-36-102 ~]$ echo $PATH
+/home/ec2-user/.local/bin:/home/ec2-user/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
+[ec2-user@ip-172-31-36-102 ~]$ echo $CLASSPATH
+/home/ec2-user/aws-msk-iam-auth-2.1.0-all.jar
+
+
+Step# for connect Kafka MSK we need to create IAM policy and attached with EC2
+goto https://docs.aws.amazon.com/msk/latest/developerguide/iam-access-control.html
+and copy
+===
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "kafka-cluster:Connect",
+                "kafka-cluster:AlterCluster",
+                "kafka-cluster:DescribeCluster"
+            ],
+            "Resource": [
+                "arn:aws:kafka:us-east-1:0123456789012:cluster/MyTestCluster/abcd1234-0123-abcd-5678-1234abcd-1"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "kafka-cluster:*Topic*",
+                "kafka-cluster:WriteData",
+                "kafka-cluster:ReadData"
+            ],
+            "Resource": [
+                "arn:aws:kafka:us-east-1:0123456789012:topic/MyTestCluster/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "kafka-cluster:AlterGroup",
+                "kafka-cluster:DescribeGroup"
+            ],
+            "Resource": [
+                "arn:aws:kafka:us-east-1:0123456789012:group/MyTestCluster/*"
+            ]
+        }
+    ]
+} 
+
+===== 
+and go to IAM->policy -> create policy ->JSON->Past here->and do some modification
+Note:- here i am going to remove resources and add "*" but when we use MSK we need mentation of MSK arn.
+
+#Step:create Role and connect policy and attached to EC2
+
+#Step: create kafka topic
+
+bin/kafka-topics.sh --create --topic test-topic --command-config config/client.properties --bootstrap-server b-2.mksclusterpks.ushu3n.c2.kafka.ap-south-1.amazonaws.com:9094
+
+
+[ec2-user@ip-172-31-82-190 ~]$ /home/ec2-user/kafka_2.12-3.5.1/bin/kafka-topics.sh --create --bootstrap-server b-3.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-1.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-2.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092 --replication-factor 3 --partitions 5 --topic test-topic
+
+---------------------------
+#Step: run producer
+--------------------------
+bin/kafka-console-producer.sh --topic Topic-Name-Here --producer-config config/client.properties --bootstrap-server b-1.mskkafkacluster.exrkpk.c2.kafka.ap-south-1.amazonaws.com:9098
+
+[ec2-user@ip-172-31-82-190 kafka_2.12-3.5.1]$ bin/kafka-console-producer.sh --topic test-topic --bootstrap-server b-3.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-1.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-2.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092
+
+bin/kafka-console-producer.sh --topic test-topic --bootstrap-server b-3.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-1.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-2.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092
+
+[ec2-user@ip-172-31-82-190 kafka_2.12-3.5.1]$ seq 100 | xargs -I {} echo "Test Message {}" | bin/kafka-console-producer.sh --topic test-topic --bootstrap-server b-3.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-1.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-2.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092
+
+
+for i in {1..1000}; do echo "Test Message $i" | kafka-console-producer.sh --broker-list <BROKER_LIST> --topic <TOPIC>; sleep 0.005; done
+
+------------------------------
+#Step: run consumer
+-----------------------------
+
+[ec2-user@ip-172-31-82-190 kafka_2.12-3.5.1]$ bin/kafka-console-consumer.sh --topic test-topic --bootstrap-server b-3.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-1.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-2.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092 --from-beginning
+
+
+
+-=================================
+[ec2-user@ip-172-31-82-190 ~]$ aws s3 cp s3://publisher-kafka /home/ec2-user --recursive
+
+=======================================
+#########################################################################################
+Important Command
+########################################################################################
+#How to create a Kafka topic?
+[ec2-user@ip-172-31-82-190 ~]$ /home/ec2-user/kafka_2.12-3.5.1/bin/kafka-topics.sh --create --bootstrap-server b-3.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-1.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-2.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092 --replication-factor 3 --partitions 5 --topic test-topic
+
+kafka-topics.sh --bootstrap-server localhost:9092 --topic first_topic --create --partitions 3 --replication-factor 1
+
+--config
+
+You can set topic-level configurations for example --config max.message.bytes=64000
+
+#Describe Kafka topic
+
+bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic first_topic
+
+bin/kafka-topics.sh --bootstrap-server b-1.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092 --describe --topic first_topic
+
+#List topic 
+[ec2-user@ip-172-31-82-190 kafka_2.12-3.5.1]$ bin/kafka-topics.sh --bootstrap-server b-1.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-2.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092,b-3.msk101.mtbg1e.c24.kafka.us-east-1.amazonaws.com:9092 --list
+
+#How to increase the number of partitions of a Kafka topic?
+kafka-topics.sh --bootstrap-server localhost:9092 --alter --topic first_topic --partitions 5
+
+kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic first_topic
+
+#How to Delete a Kafka Topic?
+kafka-topics.sh --bootstrap-server localhost:9092 --delete --topic first_topic
+
+
+# How to Produce a Message into a Kafka Topic using the CLI?
+ kafka-console-producer.sh --bootstrap-server localhost:9092 --topic first_topic
+
+#How to produce messages from a file with the Kafka Console Producer CLI?
+kafka-console-producer.sh --bootstrap-server localhost:9092 --topic first_topic < topic-input.txt>
+
+#How to produce messages with key in the Kafka Console Producer CLI?
+kafka-console-producer.sh --bootstrap-server localhost:9092 --topic first_topic --property parse.key=true --property key.separator=:
+--------------------------------------------------------------------------
+#How to Consume Data in a Kafka Topic using the CLI?
+-- Consuming only the future messages of a Kafka topic
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic first_topic
+-- Consuming all historical messages and future ones in a Kafka topic
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic first_topic --from-beginning
+
+
+#How to consume a Kafka Topic and show both the key and value using the Kafka Console Consumer CLI?
+
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic first_topic --formatter kafka.tools.DefaultMessageFormatter --property print.timestamp=true --property print.key=true --property print.value=true --from-beginning
+
+#Kafka Consumers in Group CLI Tutorial ?
+How to create consumers in a Kafka Consumer Group?
+
+kafka-topics.sh --bootstrap-server localhost:9092 --topic first_topic --create --partitions 3 --replication-factor 1
+
+Then launch a consumer in a consumer group, named my-first-application
+
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic first_topic --group my-first-application
+
+# restart of a consumer in the group 
+$ kafka-console-consumer.sh --bootstrap-server localhost:9092
+
+# How to reset a Kafka consumer group using the CLI?
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group my-first-application
+
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 --group my-first-application --reset-offsets --to-earliest --execute --topic first_topic
+
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic first_topic --group my-first-application
+
+#Example: Reset offsets shift by
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group my-first-application
+
+--In this example we reset offsets by shifting by -2 for the consumer group my-first-application subscribed on the topic first_topic
+
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 --group my-first-application --reset-offsets --shift-by -2 --execute --topic first_topic
+
+--As you can see the offsets decreased by 2 for each partition
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic first_topic --group my-first-application
+
+--How to list all Kafka consumers in a consumer groups using the CLI?
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group my-first-application
+
+--How to List of all Kafka consumers groups using the CLI?
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 --list --state
+
+--Describe all consumer groups and state
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --all-groups  --state
+
