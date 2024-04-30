@@ -1,0 +1,20 @@
+                                                                          scaleobject.yaml                                                                                     
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: kafka-scaledobject
+spec:
+  scaleTargetRef:
+    name: kafka-consumer
+  pollingInterval: 10
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 20
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: b-1.mks102connecteks.8kp5i8.c24.kafka.us-east-1.amazonaws.com:9092
+        topic: test-topic
+        consumerGroup: infinite-group
+        lagThreshold: "5"
+        offsetRestPolicy: latest
