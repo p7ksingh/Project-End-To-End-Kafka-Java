@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-publisher
+#  namespace: keda
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-publisher
+  template:
+    metadata:
+      labels:
+        app: kafka-publisher
+    spec:
+      containers:
+        - name: kafka-publisher
+          image: 856727815121.dkr.ecr.us-east-1.amazonaws.com/kafka-publisher:latest
+          ports:
+            - containerPort: 8083
+          imagePullPolicy: Always # Explicitly pull the latest image
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: producer-service
+ # namespace: keda
+spec:
+  selector:
+    app: kafka-publisher
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8083
+  type: LoadBalancer
