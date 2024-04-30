@@ -54,5 +54,9 @@ kubectl get nodes
 Run Manifests
 
 kubectl create namespace two-tier-ns
+
+==============
+ubuntu@ip-172-31-37-227:~$ eksctl delete cluster --name pankaj-cluster --region us-east-1
+=====================
 kubectl apply -f .
 Kubectl delete -f .
