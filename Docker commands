@@ -1,0 +1,7 @@
+docker build — platform linux/amd64 -t kafka-consumer .
+
+#copy from ecr
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 856727815121.dkr.ecr.us-east-1.amazonaws.com
+docker build --platform linux/amd64 -t kafka-consumer .
+docker tag kafka-consumer:latest 856727815121.dkr.ecr.us-east-1.amazonaws.com/kafka-consumer:latest
+docker push 856727815121.dkr.ecr.us-east-1.amazonaws.com/kafka-consumer:latest
