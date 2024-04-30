@@ -1,0 +1,78 @@
+Step #1:Install Helm on Ubuntu
+Download the gpg key
+
+curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+Install the apt-transport-https 
+
+sudo apt-get install apt-transport-https --yes
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+We need to update your system packages:
+
+sudo apt-get update
+Now lets Install helm:
+
+sudo apt-get install helm
+
+
+#Helm setup for KEDA
+  curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+  sudo apt-get install apt-transport-https --yes
+  sudo apt-get update
+  sudo apt-get install helm
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+  helm repo update
+  helm repo add kedacore https://kedacore.github.io/charts
+  helm repo update
+  helm install keda kedacore/keda
+  kubectl create namespace keda
+  helm install keda kedacore/keda --namespace keda
+  kubectl create namespace keda
+  kubectl create namespace keda
+  helm install keda kedacore/keda --namespace keda
+  kubectl get pods
+  kubectl get pods -n keda
+
+#Tree install
+     apt install tree
+     sudo apt install tree
+
+#helm char create
+     helm create my-kafka-scaler-chart
+     tree my-kafka-scaler-chart/
+     helm upgrade my-kafka-scaler-chart ./my-kafka-scaler-chart
+
+# nano scaledobject.yaml 
+-------------------------------------
+  apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: kafka-scaledobject
+spec:
+  scaleTargetRef:
+    name: kafka-consumer
+  pollingInterval: 10
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 20
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: b-1.mks102connecteks.8kp5i8.c24.kafka.us-east-1.amazonaws.com:9092
+        topic: test-topic
+        consumerGroup: infinite-group
+        lagThreshold: "5"
+        offsetRestPolicy: latest
+-------------
+kubectl apply -f scaleobject.yaml 
+kubectl get scaledobject
+
+----------------
+Install KEDA in Kubernetes using Helm
+#Adding the Helm repo
+helm repo add kedacore https://kedacore.github.io/charts
+#Update the Helm repo
+helm repo update
+#Install Keda helm chart
+kubectl create namespace keda
+helm install keda kedacore/keda --namespace keda
+-----------------------
